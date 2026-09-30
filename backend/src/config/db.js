@@ -1,7 +1,6 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
-
-const isDev = process.env.NODE_ENV !== 'production';
+require('mysql2'); // Forces the bundler to include mysql2 in the serverless build
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
@@ -11,10 +10,8 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT) || 3306,
     dialect: 'mysql',
-
-    // Enable logging in development (prints raw SQL queries)
-    logging: isDev ? console.log : false,
-
+    dialectModule: require('mysql2'), // Pass the loaded module directly to Sequelize
+    logging: process.env.NODE_ENV !== 'production' ? console.log : false,
     define: {
       underscored: true,
       timestamps: true,
@@ -30,13 +27,5 @@ const sequelize = new Sequelize(
     },
   }
 );
-
-// Verify the connection immediately
-if (isDev) {
-  sequelize
-    .authenticate()
-    .then(() => console.log(' Database connected successfully.'))
-    .catch((err) => console.error(' Database connection failed:', err.message));
-}
 
 module.exports = sequelize;
